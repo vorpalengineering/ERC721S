@@ -22,10 +22,10 @@ contract ERC721SScript is Script {
             "Test Subscription",
             "TEST",
             owner,
-            fundsRecipient,
             pricePerSecond,
             MIN_DURATION,
-            MAX_DURATION
+            MAX_DURATION,
+            fundsRecipient
         );
 
         vm.stopBroadcast();

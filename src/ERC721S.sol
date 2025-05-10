@@ -19,10 +19,10 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
     //========== State ==========
 
     /// @notice Minimum subscription duration in seconds
-    uint256 public minDuration = 1 days;
+    uint256 public minDuration;
     
     /// @notice Maximum subscription duration in seconds
-    uint256 public maxDuration = 365 days;
+    uint256 public maxDuration;
 
     /// @notice cost in wei per second of a subscription
     uint256 public pricePerSecond;
@@ -54,8 +54,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         uint256 _maxDuration_,
         address _fundsRecipient_
     ) ERC721(_name_, _symbol_) Ownable(_owner_) {
-        minDuration = _minDuration_;
-        maxDuration = _maxDuration_;
+        setDurationBounds(_minDuration_, _maxDuration_);
         setPrice(_pricePerSecond_);
         setFundsRecipient(_fundsRecipient_);
     }

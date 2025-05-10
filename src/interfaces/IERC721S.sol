@@ -29,8 +29,8 @@ interface IERC721S is IERC721 {
 
     //========== State Variables ==========
 
-    function minSubscriptionDuration() external view returns (uint256);
-    function maxSubscriptionDuration() external view returns (uint256);
+    function minDuration() external view returns (uint256);
+    function maxDuration() external view returns (uint256);
     function pricePerSecond() external view returns (uint256);
     function fundsRecipient() external view returns (address);
     function expirations(uint256 tokenId) external view returns (uint256);

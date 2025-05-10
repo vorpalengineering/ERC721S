@@ -50,8 +50,8 @@ contract ERC721STest is Test {
         assertEq(token.owner(), owner);
         
         // Check subscription parameters
-        assertEq(token.minSubscriptionDuration(), minDuration);
-        assertEq(token.maxSubscriptionDuration(), maxDuration);
+        assertEq(token.minDuration(), minDuration);
+        assertEq(token.maxDuration(), maxDuration);
         assertEq(token.pricePerSecond(), pricePerSecond);
         assertEq(token.fundsRecipient(), fundsRecipient);
         

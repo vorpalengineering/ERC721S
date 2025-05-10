@@ -78,8 +78,8 @@ forge test -vv
 
 ### State Variables
 
-- `MIN_SUBSCRIPTION_DURATION`: Minimum subscription period (e.g. 1 day)
-- `MAX_SUBSCRIPTION_DURATION`: Maximum subscription period (e.g. 365 days)
+- `minSubscriptionDuration`: Minimum subscription period (e.g. 1 day)
+- `maxSubscriptionDuration`: Maximum subscription period (e.g. 365 days)
 - `pricePerSecond`: Cost per second of subscription
 - `fundsRecipient`: Address receiving subscription payments
 

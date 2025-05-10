@@ -16,25 +16,33 @@ interface IERC721S is IERC721 {
     event SubscriptionPriceUpdated(uint256 newPriceInWei);
     event FundsRecipientUpdated(address newFundsRecipient);
     event PaymentReceived(address indexed account, address indexed paidBy, uint256 amount);
+    event DurationBoundsUpdated(uint256 newMinDuration, uint256 newMaxDuration);
 
     //========== Errors ==========
 
     error InvalidAddress(string parameterName, address account);
     error CostMismatch(uint256 calculated, uint256 required);
     error InsufficientPayment(uint256 required, uint256 received);
-    error InvalidDuration(uint256 duration, uint256 min, uint256 max);
+    error InvalidDuration(uint256 duration);
     error TokenNonTransferable();
     error NativeTransferFailed(address recipient, uint256 amount);
 
     //========== State Variables ==========
 
-    function MIN_SUBSCRIPTION_DURATION() external view returns (uint256);
-    function MAX_SUBSCRIPTION_DURATION() external view returns (uint256);
+    function minSubscriptionDuration() external view returns (uint256);
+    function maxSubscriptionDuration() external view returns (uint256);
     function pricePerSecond() external view returns (uint256);
     function fundsRecipient() external view returns (address);
     function expirations(uint256 tokenId) external view returns (uint256);
 
     //========== Functions ==========
+
+    /**
+     * @notice Set the duration bounds for the subscription.
+     * @param newMinDuration The minimum duration of the subscription in seconds.
+     * @param newMaxDuration The maximum duration of the subscription in seconds.
+     */
+    function setDurationBounds(uint256 newMinDuration, uint256 newMaxDuration) external;
 
     /**
      * @notice Set the price of the subscription. Denominated in wei per second.

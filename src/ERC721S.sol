@@ -19,10 +19,10 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
     //========== State ==========
 
     /// @notice Minimum subscription duration in seconds
-    uint256 public immutable MIN_SUBSCRIPTION_DURATION = 1 days;
+    uint256 public minSubscriptionDuration = 1 days;
     
     /// @notice Maximum subscription duration in seconds
-    uint256 public immutable MAX_SUBSCRIPTION_DURATION = 365 days;
+    uint256 public maxSubscriptionDuration = 365 days;
 
     /// @notice cost in wei per second of a subscription
     uint256 public pricePerSecond;
@@ -54,13 +54,23 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         uint256 _maxDuration_,
         address _fundsRecipient_
     ) ERC721(_name_, _symbol_) Ownable(_owner_) {
-        MIN_SUBSCRIPTION_DURATION = _minDuration_;
-        MAX_SUBSCRIPTION_DURATION = _maxDuration_;
+        minSubscriptionDuration = _minDuration_;
+        maxSubscriptionDuration = _maxDuration_;
         setPrice(_pricePerSecond_);
         setFundsRecipient(_fundsRecipient_);
     }
     
     //========== Public Functions ==========
+
+    /**
+     * @inheritdoc IERC721S
+     */
+    function setDurationBounds(uint256 newMinDuration, uint256 newMaxDuration) public onlyOwner {
+        if (newMinDuration > newMaxDuration) revert InvalidDuration(newMinDuration);
+        minSubscriptionDuration = newMinDuration;
+        maxSubscriptionDuration = newMaxDuration;
+        emit DurationBoundsUpdated(newMinDuration, newMaxDuration);
+    }
 
     /**
      * @inheritdoc IERC721S
@@ -91,8 +101,8 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         uint256 calculatedCost = getSubscriptionCost(durationInSeconds);
         if (calculatedCost != totalCostInWei) revert CostMismatch(calculatedCost, totalCostInWei);
         if (msg.value != calculatedCost) revert InsufficientPayment(calculatedCost, msg.value);
-        if (durationInSeconds < MIN_SUBSCRIPTION_DURATION || durationInSeconds > MAX_SUBSCRIPTION_DURATION) {
-            revert InvalidDuration(durationInSeconds, MIN_SUBSCRIPTION_DURATION, MAX_SUBSCRIPTION_DURATION);
+        if (durationInSeconds < minSubscriptionDuration || durationInSeconds > maxSubscriptionDuration) {
+            revert InvalidDuration(durationInSeconds);
         }
 
         // Send payment to the funds recipient

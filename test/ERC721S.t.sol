@@ -13,8 +13,8 @@ contract ERC721STest is Test {
     address public owner;
     address public fundsRecipient;
     uint256 public pricePerSecond = 11570000000000;
-    uint256 public constant MIN_DURATION = 1 days;
-    uint256 public constant MAX_DURATION = 365 days;
+    uint256 public constant minDuration = 1 days;
+    uint256 public constant maxDuration = 365 days;
 
     // ERC721 state
     string public constant NAME = "Test Subscription";
@@ -32,8 +32,8 @@ contract ERC721STest is Test {
             SYMBOL,
             owner,
             pricePerSecond,
-            MIN_DURATION,
-            MAX_DURATION,
+            minDuration,
+            maxDuration,
             fundsRecipient
         );
         vm.stopPrank();
@@ -50,8 +50,8 @@ contract ERC721STest is Test {
         assertEq(token.owner(), owner);
         
         // Check subscription parameters
-        assertEq(token.MIN_SUBSCRIPTION_DURATION(), MIN_DURATION);
-        assertEq(token.MAX_SUBSCRIPTION_DURATION(), MAX_DURATION);
+        assertEq(token.minSubscriptionDuration(), minDuration);
+        assertEq(token.maxSubscriptionDuration(), maxDuration);
         assertEq(token.pricePerSecond(), pricePerSecond);
         assertEq(token.fundsRecipient(), fundsRecipient);
         
@@ -138,7 +138,7 @@ contract ERC721STest is Test {
 
     function test_Subscribe_Reverts_InvalidDuration() public {
         // Initialize state
-        uint256 duration = MAX_DURATION + 1;
+        uint256 duration = maxDuration + 1;
         uint256 amountToFund = token.getSubscriptionCost(duration);
 
         // Make and fund subscriber account 
@@ -150,16 +150,14 @@ contract ERC721STest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC721S.InvalidDuration.selector, 
-                duration, 
-                MIN_DURATION, 
-                MAX_DURATION
+                duration
             )
         );
         token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
         vm.stopPrank();
 
         // Initialize state
-        duration = MIN_DURATION - 1;
+        duration = minDuration - 1;
         amountToFund = token.getSubscriptionCost(duration);
 
         // Attempt to subscribe with duration less than min duration
@@ -167,9 +165,7 @@ contract ERC721STest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC721S.InvalidDuration.selector, 
-                duration, 
-                MIN_DURATION, 
-                MAX_DURATION
+                duration
             )
         );
         token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);

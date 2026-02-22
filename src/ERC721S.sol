@@ -46,6 +46,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      * @param _pricePerSecond_ The price of the subscription in wei per second
      * @param _minDuration_ The minimum duration of the subscription in seconds
      * @param _maxDuration_ The maximum duration of the subscription in seconds
+     * @param _maxAccumulatedDuration_ The maximum accumulated duration of the subscription in seconds
      * @param _fundsRecipient_ The address that is forwarded subscription payments
      */
     constructor(
@@ -79,6 +80,9 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         emit DurationBoundsUpdated(newMinDuration, newMaxDuration);
     }
 
+    /**
+     * @inheritdoc IERC721S
+     */
     function setMaxAccumulatedDuration(uint256 newMaxAccumulatedDuration) public onlyOwner {
         if (newMaxAccumulatedDuration < maxDuration) revert InvalidDuration(newMaxAccumulatedDuration);
         maxAccumulatedDuration = newMaxAccumulatedDuration;
@@ -158,7 +162,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      * @inheritdoc IERC721S
      */
     function withdraw() external onlyOwner {
-        // Prevent wthdrawals to self
+        // Prevent withdrawals to self
         if (fundsRecipient == address(this)) revert NativeTransferFailed(fundsRecipient, address(this).balance);
 
         // Transfer full native balance to the funds recipient

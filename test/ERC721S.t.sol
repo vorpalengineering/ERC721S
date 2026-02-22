@@ -98,7 +98,7 @@ contract ERC721STest is Test {
         vm.startPrank(subscriber);
         vm.expectEmit(true, true, false, true);
         emit IERC721S.SubscriptionStarted(subscriber, token.deriveTokenId(subscriber), block.timestamp, block.timestamp + duration);
-        (uint256 tokenId, uint256 expiration) = token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        (uint256 tokenId, uint256 expiration) = token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
 
         // Check balance
@@ -117,25 +117,25 @@ contract ERC721STest is Test {
         assertEq(token.hasActiveSubscription(subscriber), true);
     }
 
-    function test_Subscribe_Reverts_InsufficientFunds() public {
+    function test_Subscribe_Reverts_InvalidPayment() public {
         // Initialize state
         uint256 duration = 1 days;
         uint256 amountToFund = token.getSubscriptionCost(duration);
 
         // Make and fund subscriber account
         address subscriber = makeAddr("subscriber");
-        vm.deal(subscriber, amountToFund - 1);
+        vm.deal(subscriber, amountToFund);
 
-        // Subscribe    
+        // Subscribe with insufficient funds
         vm.startPrank(subscriber);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC721S.InsufficientPayment.selector, 
-                amountToFund, 
+                IERC721S.InvalidPayment.selector,
+                amountToFund,
                 amountToFund - 1
             )
         );
-        token.subscribe{value: amountToFund - 1}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund - 1}(subscriber, duration);
         vm.stopPrank();
     }
 
@@ -156,7 +156,7 @@ contract ERC721STest is Test {
                 duration
             )
         );
-        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
 
         // Initialize state
@@ -171,7 +171,7 @@ contract ERC721STest is Test {
                 duration
             )
         );
-        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
     }
 
@@ -221,7 +221,7 @@ contract ERC721STest is Test {
         vm.stopPrank();
     }
 
-    function test_Subscribe_Reverts_CostMismatch() public {
+    function test_Subscribe_Reverts_InvalidPayment_AfterPriceChange() public {
         // Initialize state
         uint256 duration = 1 days;
         uint256 amountToFund = token.getSubscriptionCost(duration);
@@ -235,16 +235,16 @@ contract ERC721STest is Test {
         token.setPrice(pricePerSecond * 2);
         vm.stopPrank();
 
-        // Subscribe with incorrect amount
+        // Subscribe with amount based on old price
         vm.startPrank(subscriber);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC721S.CostMismatch.selector, 
-                amountToFund * 2, 
+                IERC721S.InvalidPayment.selector,
+                amountToFund * 2,
                 amountToFund
             )
         );
-        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
     }
     
@@ -270,7 +270,7 @@ contract ERC721STest is Test {
 
         // Subscribe
         vm.startPrank(subscriber);
-        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
 
         // Change funds recipient to a real address before withdrawing
@@ -324,12 +324,12 @@ contract ERC721STest is Test {
 
         // Subscribe
         vm.startPrank(subscriber);
-        (uint256 tokenId, uint256 firstExpiration) = token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        (uint256 tokenId, uint256 firstExpiration) = token.subscribe{value: amountToFund}(subscriber, duration);
 
         // Extend subscription
         vm.expectEmit(true, true, false, true);
         emit IERC721S.SubscriptionExtended(subscriber, tokenId, firstExpiration + duration);
-        (uint256 extendedTokenId, uint256 extendedExpiration) = token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        (uint256 extendedTokenId, uint256 extendedExpiration) = token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
 
         // Check token id is the same
@@ -358,7 +358,7 @@ contract ERC721STest is Test {
 
         // Subscribe for max duration
         vm.startPrank(subscriber);
-        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund}(subscriber, duration);
 
         // Extend for max duration again (now at 730 days remaining, which is >= maxAccumulatedDuration)
         vm.expectRevert(
@@ -367,7 +367,7 @@ contract ERC721STest is Test {
                 duration
             )
         );
-        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        token.subscribe{value: amountToFund}(subscriber, duration);
         vm.stopPrank();
     }
 
@@ -387,10 +387,10 @@ contract ERC721STest is Test {
 
         // Subscribe for max duration
         vm.startPrank(subscriber);
-        token.subscribe{value: firstCost}(subscriber, firstDuration, firstCost);
+        token.subscribe{value: firstCost}(subscriber, firstDuration);
 
         // Extend just under the cap — should succeed
-        token.subscribe{value: secondCost}(subscriber, secondDuration, secondCost);
+        token.subscribe{value: secondCost}(subscriber, secondDuration);
         vm.stopPrank();
 
         // Check total accumulated duration

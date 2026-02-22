@@ -22,8 +22,7 @@ interface IERC721S is IERC721 {
     //========== Errors ==========
 
     error InvalidAddress(string parameterName, address account);
-    error CostMismatch(uint256 calculated, uint256 required);
-    error InsufficientPayment(uint256 required, uint256 received);
+    error InvalidPayment(uint256 required, uint256 received);
     error InvalidDuration(uint256 duration);
     error TokenNonTransferable();
     error NativeTransferFailed(address recipient, uint256 amount);
@@ -61,14 +60,12 @@ interface IERC721S is IERC721 {
      * @notice Create or extend a subscription.
      * @param subscriptionOwner The account that will own the subscription.
      * @param durationInSeconds The duration of the subscription in seconds.
-     * @param totalCostInWei The total cost of the subscription in wei.
      * @return tokenId The id of the subscription token.
      * @return expiration The expiration timestamp of the subscription.
      */
     function subscribe(
         address subscriptionOwner,
-        uint256 durationInSeconds,
-        uint256 totalCostInWei
+        uint256 durationInSeconds
     ) external payable returns (uint256 tokenId, uint256 expiration);
 
     /**

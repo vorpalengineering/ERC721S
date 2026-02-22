@@ -106,13 +106,11 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      */
     function subscribe(
         address subscriptionOwner,
-        uint256 durationInSeconds,
-        uint256 totalCostInWei
+        uint256 durationInSeconds
     ) public payable nonReentrant returns (uint256 tokenId, uint256 expiration) {
         // Validate
         uint256 calculatedCost = getSubscriptionCost(durationInSeconds);
-        if (calculatedCost != totalCostInWei) revert CostMismatch(calculatedCost, totalCostInWei);
-        if (msg.value != calculatedCost) revert InsufficientPayment(calculatedCost, msg.value);
+        if (msg.value != calculatedCost) revert InvalidPayment(calculatedCost, msg.value);
         if (durationInSeconds < minDuration || durationInSeconds > maxDuration) {
             revert InvalidDuration(durationInSeconds);
         }

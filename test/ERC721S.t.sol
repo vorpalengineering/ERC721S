@@ -221,6 +221,21 @@ contract ERC721STest is Test {
         vm.stopPrank();
     }
 
+    function test_SetDurationBounds_Reverts_MaxDurationExceedsMaxAccumulatedDuration() public {
+        uint256 newMaxDuration = maxAccumulatedDuration + 1;
+
+        // Attempt to set max duration greater than max accumulated duration
+        vm.startPrank(owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                newMaxDuration
+            )
+        );
+        token.setDurationBounds(minDuration, newMaxDuration);
+        vm.stopPrank();
+    }
+
     function test_Subscribe_Reverts_InvalidPayment_AfterPriceChange() public {
         // Initialize state
         uint256 duration = 1 days;

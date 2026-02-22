@@ -58,8 +58,8 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         uint256 _maxAccumulatedDuration_,
         address _fundsRecipient_
     ) ERC721(_name_, _symbol_) Ownable(_owner_) {
-        setDurationBounds(_minDuration_, _maxDuration_);
         setMaxAccumulatedDuration(_maxAccumulatedDuration_);
+        setDurationBounds(_minDuration_, _maxDuration_);
         setPrice(_pricePerSecond_);
         setFundsRecipient(_fundsRecipient_);
     }

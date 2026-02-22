@@ -12,6 +12,7 @@ contract ERC721SScript is Script {
     uint256 public pricePerSecond = 11570000000000;
     uint256 public constant minDuration = 1 days;
     uint256 public constant maxDuration = 365 days;
+    uint256 public constant maxAccumulatedDuration = 730 days;
     string public constant name = "Test Subscription";
     string public constant symbol = "TEST";
 
@@ -27,6 +28,7 @@ contract ERC721SScript is Script {
             pricePerSecond,
             minDuration,
             maxDuration,
+            maxAccumulatedDuration,
             fundsRecipient
         );
 

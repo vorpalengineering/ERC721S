@@ -24,6 +24,9 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
     /// @notice Maximum subscription duration in seconds
     uint256 public maxDuration;
 
+    /// @notice Maximum accumulated duration of subscription for a user at one time
+    uint256 public maxAccumulatedDuration;
+
     /// @notice cost in wei per second of a subscription
     uint256 public pricePerSecond;
 
@@ -52,9 +55,11 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         uint256 _pricePerSecond_,
         uint256 _minDuration_,
         uint256 _maxDuration_,
+        uint256 _maxAccumulatedDuration_,
         address _fundsRecipient_
     ) ERC721(_name_, _symbol_) Ownable(_owner_) {
         setDurationBounds(_minDuration_, _maxDuration_);
+        setMaxAccumulatedDuration(_maxAccumulatedDuration_);
         setPrice(_pricePerSecond_);
         setFundsRecipient(_fundsRecipient_);
     }
@@ -69,6 +74,12 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         minDuration = newMinDuration;
         maxDuration = newMaxDuration;
         emit DurationBoundsUpdated(newMinDuration, newMaxDuration);
+    }
+
+    function setMaxAccumulatedDuration(uint256 newMaxAccumulatedDuration) public onlyOwner {
+        if (newMaxAccumulatedDuration < maxDuration) revert InvalidDuration(newMaxAccumulatedDuration);
+        maxAccumulatedDuration = newMaxAccumulatedDuration;
+        emit MaxAccumulatedDurationUpdated(newMaxAccumulatedDuration);
     }
 
     /**
@@ -110,6 +121,11 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         // If the owner has an active subscription, extend the expiration
         // Otherwise, start a new subscription
         if (isSubscriptionActive(tokenId)) {
+            // Check new expiration not greater than max accumulated duration
+            if ((expirations[tokenId] + durationInSeconds) - block.timestamp >= maxAccumulatedDuration) {
+                revert InvalidDuration(durationInSeconds);
+            }
+
             // Calculate expiration from current expiration
             expiration = expirations[tokenId] + durationInSeconds;
             emit SubscriptionExtended(subscriptionOwner, tokenId, expiration);

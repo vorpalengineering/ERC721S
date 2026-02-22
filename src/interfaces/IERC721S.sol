@@ -17,6 +17,7 @@ interface IERC721S is IERC721 {
     event FundsRecipientUpdated(address newFundsRecipient);
     event PaymentReceived(address indexed account, address indexed paidBy, uint256 amount);
     event DurationBoundsUpdated(uint256 newMinDuration, uint256 newMaxDuration);
+    event MaxAccumulatedDurationUpdated(uint256 newMaxAccumulatedDuration);
 
     //========== Errors ==========
 

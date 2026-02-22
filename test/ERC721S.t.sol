@@ -15,6 +15,7 @@ contract ERC721STest is Test {
     uint256 public pricePerSecond = 11570000000000;
     uint256 public constant minDuration = 1 days;
     uint256 public constant maxDuration = 365 days;
+    uint256 public constant maxAccumulatedDuration = 730 days;
 
     // ERC721 state
     string public constant NAME = "Test Subscription";
@@ -34,6 +35,7 @@ contract ERC721STest is Test {
             pricePerSecond,
             minDuration,
             maxDuration,
+            maxAccumulatedDuration,
             fundsRecipient
         );
         vm.stopPrank();
@@ -52,6 +54,7 @@ contract ERC721STest is Test {
         // Check subscription parameters
         assertEq(token.minDuration(), minDuration);
         assertEq(token.maxDuration(), maxDuration);
+        assertEq(token.maxAccumulatedDuration(), maxAccumulatedDuration);
         assertEq(token.pricePerSecond(), pricePerSecond);
         assertEq(token.fundsRecipient(), fundsRecipient);
         
@@ -234,5 +237,119 @@ contract ERC721STest is Test {
         assertEq(address(token).balance, 0);
         assertEq(address(fundsRecipient).balance, 0);
         assertEq(address(subscriber).balance, 0);
+    }
+
+    function test_SetMaxAccumulatedDuration() public {
+        uint256 newMaxAccumulatedDuration = maxAccumulatedDuration * 2;
+
+        // Set max accumulated duration
+        vm.startPrank(owner);
+        token.setMaxAccumulatedDuration(newMaxAccumulatedDuration);
+        vm.stopPrank();
+
+        // Check max accumulated duration
+        assertEq(token.maxAccumulatedDuration(), newMaxAccumulatedDuration);
+    }
+
+    function test_SetMaxAccumulatedDuration_Reverts_LessThanMaxDuration() public {
+        uint256 newMaxAccumulatedDuration = maxDuration - 1;
+
+        // Attempt to set max accumulated duration less than max duration
+        vm.startPrank(owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                newMaxAccumulatedDuration
+            )
+        );
+        token.setMaxAccumulatedDuration(newMaxAccumulatedDuration);
+        vm.stopPrank();
+    }
+
+    function test_Subscribe_Extend() public {
+        // Initialize state
+        uint256 duration = 30 days;
+        uint256 amountToFund = token.getSubscriptionCost(duration);
+
+        // Make and fund subscriber account
+        address subscriber = makeAddr("subscriber");
+        vm.deal(subscriber, amountToFund * 2);
+
+        // Subscribe
+        vm.startPrank(subscriber);
+        (uint256 tokenId, uint256 firstExpiration) = token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+
+        // Extend subscription
+        vm.expectEmit(true, true, false, true);
+        emit IERC721S.SubscriptionExtended(subscriber, tokenId, firstExpiration + duration);
+        (uint256 extendedTokenId, uint256 extendedExpiration) = token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        vm.stopPrank();
+
+        // Check token id is the same
+        assertEq(extendedTokenId, tokenId);
+
+        // Check expiration was extended from previous expiration
+        assertEq(extendedExpiration, firstExpiration + duration);
+        assertEq(token.expirations(tokenId), extendedExpiration);
+
+        // Check subscription is still active
+        assertEq(token.isSubscriptionActive(tokenId), true);
+        assertEq(token.hasActiveSubscription(subscriber), true);
+
+        // Check no duplicate token was minted
+        assertEq(token.balanceOf(subscriber), 1);
+    }
+
+    function test_Subscribe_Extend_Reverts_ExceedsMaxAccumulatedDuration() public {
+        // Initialize state
+        uint256 duration = maxDuration;
+        uint256 amountToFund = token.getSubscriptionCost(duration);
+
+        // Make and fund subscriber account
+        address subscriber = makeAddr("subscriber");
+        vm.deal(subscriber, amountToFund * 3);
+
+        // Subscribe for max duration
+        vm.startPrank(subscriber);
+        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+
+        // Extend for max duration again (now at 730 days remaining, which is >= maxAccumulatedDuration)
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                duration
+            )
+        );
+        token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
+        vm.stopPrank();
+    }
+
+    function test_Subscribe_Extend_AtMaxAccumulatedDuration() public {
+        // Initialize state — extend just under the cap
+        uint256 firstDuration = maxDuration;
+        uint256 firstCost = token.getSubscriptionCost(firstDuration);
+
+        // The remaining time after first subscribe is maxDuration (365 days)
+        // maxAccumulatedDuration is 730 days, so we can extend by up to 365 days - 1 second
+        uint256 secondDuration = maxDuration - 1 seconds;
+        uint256 secondCost = token.getSubscriptionCost(secondDuration);
+
+        // Make and fund subscriber account
+        address subscriber = makeAddr("subscriber");
+        vm.deal(subscriber, firstCost + secondCost);
+
+        // Subscribe for max duration
+        vm.startPrank(subscriber);
+        token.subscribe{value: firstCost}(subscriber, firstDuration, firstCost);
+
+        // Extend just under the cap — should succeed
+        token.subscribe{value: secondCost}(subscriber, secondDuration, secondCost);
+        vm.stopPrank();
+
+        // Check total accumulated duration
+        uint256 tokenId = token.deriveTokenId(subscriber);
+        uint256 totalRemaining = token.expirations(tokenId) - block.timestamp;
+        assertEq(totalRemaining, firstDuration + secondDuration);
+        assertEq(token.hasActiveSubscription(subscriber), true);
     }
 }

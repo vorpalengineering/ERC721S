@@ -51,7 +51,7 @@ interface IERC721S is IERC721 {
     function setPrice(uint256 newPricePerSecond) external;
 
     /**
-     * @notice Set the address that receives funds.
+     * @notice Set the address that is forwarded subscription payments.
      * @param newFundsRecipient The address that receives funds
      */
     function setFundsRecipient(address newFundsRecipient) external;

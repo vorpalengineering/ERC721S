@@ -27,7 +27,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
     /// @notice cost in wei per second of a subscription
     uint256 public pricePerSecond;
 
-    /// @notice address that receives funds
+    /// @notice address that is forwarded subscription payments
     address public fundsRecipient;
 
     /// @notice subscription tokenId => expiration timestamp
@@ -43,7 +43,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      * @param _pricePerSecond_ The price of the subscription in wei per second
      * @param _minDuration_ The minimum duration of the subscription in seconds
      * @param _maxDuration_ The maximum duration of the subscription in seconds
-     * @param _fundsRecipient_ The address that receives funds
+     * @param _fundsRecipient_ The address that is forwarded subscription payments
      */
     constructor(
         string memory _name_, 
@@ -104,14 +104,6 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
             revert InvalidDuration(durationInSeconds);
         }
 
-        // Send payment to the funds recipient
-        // If the funds recipient is self then keep the funds
-        if (fundsRecipient != address(this)) {
-            (bool success, ) = payable(fundsRecipient).call{value: calculatedCost}("");
-            if (!success) revert NativeTransferFailed(fundsRecipient, calculatedCost);
-        }
-        emit PaymentReceived(subscriptionOwner, msg.sender, calculatedCost);
-
         // Derive token id
         tokenId = deriveTokenId(subscriptionOwner);
 
@@ -127,14 +119,22 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
             emit SubscriptionStarted(subscriptionOwner, tokenId, block.timestamp, expiration);
         }
 
+        // Set expiration
+        expirations[tokenId] = expiration;
+
+        // Send payment to the funds recipient
+        // If the funds recipient is self then keep the funds
+        if (fundsRecipient != address(this)) {
+            (bool success, ) = payable(fundsRecipient).call{value: calculatedCost}("");
+            if (!success) revert NativeTransferFailed(fundsRecipient, calculatedCost);
+        }
+        emit PaymentReceived(subscriptionOwner, msg.sender, calculatedCost);
+
         // Mint a new token if the owner has no subscription token
         if (balanceOf(subscriptionOwner) == 0 && _ownerOf(tokenId) == address(0x0)) {
             // Safe mint so contracts are aware
             _safeMint(subscriptionOwner, tokenId);
         }
-
-        // Set expiration
-        expirations[tokenId] = expiration;
 
         // Return token id and expiration
         return (tokenId, expiration);

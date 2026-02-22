@@ -70,6 +70,8 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      * @inheritdoc IERC721S
      */
     function setDurationBounds(uint256 newMinDuration, uint256 newMaxDuration) public onlyOwner {
+        if (newMinDuration == 0) revert InvalidDuration(newMinDuration);
+        if (newMaxDuration == 0) revert InvalidDuration(newMaxDuration);
         if (newMinDuration > newMaxDuration) revert InvalidDuration(newMinDuration);
         minDuration = newMinDuration;
         maxDuration = newMaxDuration;

@@ -175,6 +175,30 @@ contract ERC721STest is Test {
         vm.stopPrank();
     }
 
+    function test_SetDurationBounds_Reverts_ZeroMinDuration() public {
+        vm.startPrank(owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                0
+            )
+        );
+        token.setDurationBounds(0, maxDuration);
+        vm.stopPrank();
+    }
+
+    function test_SetDurationBounds_Reverts_ZeroMaxDuration() public {
+        vm.startPrank(owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                0
+            )
+        );
+        token.setDurationBounds(1, 0);
+        vm.stopPrank();
+    }
+
     function test_Subscribe_Reverts_CostMismatch() public {
         // Initialize state
         uint256 duration = 1 days;

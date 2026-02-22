@@ -73,6 +73,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         if (newMinDuration == 0) revert InvalidDuration(newMinDuration);
         if (newMaxDuration == 0) revert InvalidDuration(newMaxDuration);
         if (newMinDuration > newMaxDuration) revert InvalidDuration(newMinDuration);
+        if (newMaxDuration > maxAccumulatedDuration) revert InvalidDuration(newMaxDuration);
         minDuration = newMinDuration;
         maxDuration = newMaxDuration;
         emit DurationBoundsUpdated(newMinDuration, newMaxDuration);

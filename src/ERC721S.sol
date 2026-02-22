@@ -160,9 +160,9 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      * @inheritdoc IERC721S
      */
     function withdraw() external onlyOwner {
-        // Transfer full native balance to the contract owner
-        (bool success, ) = payable(owner()).call{value: address(this).balance}("");
-        if (!success) revert NativeTransferFailed(owner(), address(this).balance);
+        // Transfer full native balance to the funds recipient
+        (bool success, ) = payable(fundsRecipient).call{value: address(this).balance}("");
+        if (!success) revert NativeTransferFailed(fundsRecipient, address(this).balance);
     }
 
     //========== View/Pure Functions ==========

@@ -207,11 +207,11 @@ contract ERC721STest is Test {
         uint256 duration = 1 days;
         uint256 amountToFund = token.getSubscriptionCost(duration);
 
-        // Make and fund subscriber account 
+        // Make and fund subscriber account
         address subscriber = makeAddr("subscriber");
         vm.deal(subscriber, amountToFund);
 
-        // Change funds recipient to token address
+        // Change funds recipient to token address so funds accumulate in contract
         vm.startPrank(owner);
         token.setFundsRecipient(address(token));
         vm.stopPrank();
@@ -225,17 +225,18 @@ contract ERC721STest is Test {
         // Subscribe
         vm.startPrank(subscriber);
         token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
-        vm.stopPrank(); 
+        vm.stopPrank();
 
-        // Withdraw
+        // Change funds recipient to a real address before withdrawing
         vm.startPrank(owner);
+        token.setFundsRecipient(fundsRecipient);
         token.withdraw();
         vm.stopPrank();
 
-        // Check post-withdraw balances
-        assertEq(address(owner).balance, amountToFund);
+        // Check post-withdraw balances — funds go to fundsRecipient, not owner
+        assertEq(address(owner).balance, 0);
         assertEq(address(token).balance, 0);
-        assertEq(address(fundsRecipient).balance, 0);
+        assertEq(address(fundsRecipient).balance, amountToFund);
         assertEq(address(subscriber).balance, 0);
     }
 

@@ -173,6 +173,7 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
      * @inheritdoc IERC721S
      */
     function getSubscriptionCost(uint256 durationInSeconds) public view returns (uint256) {
+        if (durationInSeconds < minDuration || durationInSeconds > maxDuration) revert InvalidDuration(durationInSeconds);
         return durationInSeconds * pricePerSecond;
     }
 

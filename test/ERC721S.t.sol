@@ -140,11 +140,11 @@ contract ERC721STest is Test {
     }
 
     function test_Subscribe_Reverts_InvalidDuration() public {
-        // Initialize state
+        // Initialize state — compute cost manually since getSubscriptionCost now validates bounds
         uint256 duration = maxDuration + 1;
-        uint256 amountToFund = token.getSubscriptionCost(duration);
+        uint256 amountToFund = duration * pricePerSecond;
 
-        // Make and fund subscriber account 
+        // Make and fund subscriber account
         address subscriber = makeAddr("subscriber");
         vm.deal(subscriber, amountToFund);
 
@@ -152,7 +152,7 @@ contract ERC721STest is Test {
         vm.startPrank(subscriber);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC721S.InvalidDuration.selector, 
+                IERC721S.InvalidDuration.selector,
                 duration
             )
         );
@@ -161,18 +161,40 @@ contract ERC721STest is Test {
 
         // Initialize state
         duration = minDuration - 1;
-        amountToFund = token.getSubscriptionCost(duration);
+        amountToFund = duration * pricePerSecond;
 
         // Attempt to subscribe with duration less than min duration
         vm.startPrank(subscriber);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC721S.InvalidDuration.selector, 
+                IERC721S.InvalidDuration.selector,
                 duration
             )
         );
         token.subscribe{value: amountToFund}(subscriber, duration, amountToFund);
         vm.stopPrank();
+    }
+
+    function test_GetSubscriptionCost_Reverts_InvalidDuration() public {
+        // Attempt to get cost for duration greater than max duration
+        uint256 duration = maxDuration + 1;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                duration
+            )
+        );
+        token.getSubscriptionCost(duration);
+
+        // Attempt to get cost for duration less than min duration
+        duration = minDuration - 1;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721S.InvalidDuration.selector,
+                duration
+            )
+        );
+        token.getSubscriptionCost(duration);
     }
 
     function test_SetDurationBounds_Reverts_ZeroMinDuration() public {

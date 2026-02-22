@@ -31,6 +31,7 @@ interface IERC721S is IERC721 {
 
     function minDuration() external view returns (uint256);
     function maxDuration() external view returns (uint256);
+    function maxAccumulatedDuration() external view returns (uint256);
     function pricePerSecond() external view returns (uint256);
     function fundsRecipient() external view returns (address);
     function expirations(uint256 tokenId) external view returns (uint256);
@@ -43,6 +44,12 @@ interface IERC721S is IERC721 {
      * @param newMaxDuration The maximum duration of the subscription in seconds.
      */
     function setDurationBounds(uint256 newMinDuration, uint256 newMaxDuration) external;
+
+    /**
+     * @notice Set the max accumulated duration for a subscription.
+     * @param newMaxAccumulatedDuration The max accumulated duration in seconds.
+     */
+    function setMaxAccumulatedDuration(uint256 newMaxAccumulatedDuration) external;
 
     /**
      * @notice Set the price of the subscription. Denominated in wei per second.

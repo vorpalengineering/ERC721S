@@ -111,9 +111,6 @@ contract ERC721S is IERC721S, ERC721, Ownable2Step, ReentrancyGuard {
         // Validate
         uint256 calculatedCost = getSubscriptionCost(durationInSeconds);
         if (msg.value != calculatedCost) revert InvalidPayment(calculatedCost, msg.value);
-        if (durationInSeconds < minDuration || durationInSeconds > maxDuration) {
-            revert InvalidDuration(durationInSeconds);
-        }
 
         // Derive token id
         tokenId = deriveTokenId(subscriptionOwner);
